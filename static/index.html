@@ -1,0 +1,18 @@
+<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<title>NYC live transit</title>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel=stylesheet>
+<style>html,body,#m{margin:0;height:100%}#s{position:absolute;z-index:2;top:8px;left:8px;background:#fffd;padding:4px 8px;font:13px sans-serif;border-radius:4px}</style></head>
+<body><div id=m></div><div id=s>loading... <a href="/osmand">OsmAnd</a></div>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+const map=new maplibregl.Map({container:'m',center:[-73.98,40.74],zoom:10.5,style:{version:8,
+ sources:{osm:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'&copy; OpenStreetMap contributors'},
+          v:{type:'geojson',data:{type:'FeatureCollection',features:[]}}},
+ layers:[{id:'osm',type:'raster',source:'osm'},
+  {id:'veh',type:'circle',source:'v',paint:{'circle-color':['get','color'],'circle-radius':['interpolate',['linear'],['zoom'],9,2,14,6],'circle-stroke-color':'#fff','circle-stroke-width':1}},
+  {id:'lbl',type:'symbol',source:'v',minzoom:13,filter:['!=',['get','mode'],'bus'],layout:{'text-field':['get','label'],'text-size':10,'text-allow-overlap':true},paint:{'text-color':'#fff'}}]}});
+const s=document.getElementById('s');
+async function tick(){try{const r=await (await fetch('/api/vehicles.geojson')).json();map.getSource('v').setData(r);
+ s.firstChild.textContent=r.features.length+' vehicles, '+Math.round(Date.now()/1000-r.t)+'s old ';}catch(e){s.firstChild.textContent='error '}}
+map.on('load',()=>{tick();setInterval(tick,10000)});
+</script></body></html>
